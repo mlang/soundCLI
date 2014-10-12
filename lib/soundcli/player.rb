@@ -5,9 +5,9 @@ require "soundcli/helpers"
 class Player
   def initialize
     # create the bin
-    @bin, error = Gst.parse_launch("souphttpsrc name=httpsrc ! decodebin ! audioconvert ! audioresample ! autoaudiosink")
+    @playbin, error = Gst.parse_launch("playbin")
     #watch the bus for messages
-    @bin.bus.add_watch do |bus, message|
+    @playbin.bus.add_watch do |bus, message|
       handle_bus_message(message)
     end
   end
@@ -16,7 +16,7 @@ class Player
     @comments = comments
     @comment_ptr = 0
 
-    @bin.get_by_name("httpsrc").location = uri
+    @playbin.uri = uri
   end
 
   protected
@@ -36,30 +36,30 @@ class Player
 
   # get position of the playbin
   def position
-    result, pos = @bin.query_position(Gst::Format::TIME)
+    result, pos = @playbin.query_position(Gst::Format::TIME)
     return pos
   end
 
   # get song duration
   def duration
-    result, dur = @bin.query_duration(Gst::Format::TIME)
+    result, dur = @playbin.query_duration(Gst::Format::TIME)
     return dur
   end
 
   public
   #set or get the volume
   def volume(v)
-    @bin.set_property("volume", v) if v and (0..1).cover? v
-    return @bin.get_property("volume")
+    @playbin.set_property("volume", v) if v and (0..1).cover? v
+    return @playbin.get_property("volume")
   end
 
   def quit
-    @bin.stop
+    @playbin.stop
     @mainloop.quit
   end
 
   def play
-    @bin.play
+    @playbin.play
 
     GLib::Timeout.add(100) do
       @duration = self.ns_to_str(self.duration)
@@ -102,13 +102,13 @@ class Player
   end
 
   def resume
-    @bin.set_state(Gst::State::PLAYING)
-    @bin.play
+    @playbin.set_state(Gst::State::PLAYING)
+    @playbin.play
   end
 
   def pause
-    @bin.set_state(Gst::State::PAUSED)
-    @bin.pause
+    @playbin.set_state(Gst::State::PAUSED)
+    @playbin.pause
     Helpers::say("--- PAUSED ---\r", :normal)
   end
 
@@ -126,25 +126,25 @@ class Player
 
       $stdout.flush
     when Gst::MessageType::ERROR
-      @bin.set_state(Gst::State::NULL)
+      @playbin.set_state(Gst::State::NULL)
       $stderr.puts msg.parse_error
       self.quit
     when Gst::MessageType::EOS
-      @bin.set_state(Gst::State::NULL)
+      @playbin.set_state(Gst::State::NULL)
       self.quit
     end
     true
   end
 
   def done?
-    return (@bin.get_state(Gst::CLOCK_TIME_NONE)[1] == Gst::State::NULL)
+    return (@playbin.get_state(Gst::CLOCK_TIME_NONE)[1] == Gst::State::NULL)
   end
 
   def playing?
-    return (@bin.get_state(Gst::CLOCK_TIME_NONE)[1] == Gst::State::PLAYING)
+    return (@playbin.get_state(Gst::CLOCK_TIME_NONE)[1] == Gst::State::PLAYING)
   end
 
   def paused?
-    return (@bin.get_state(Gst::CLOCK_TIME_NONE)[1] == Gst::State::PAUSED)
+    return (@playbin.get_state(Gst::CLOCK_TIME_NONE)[1] == Gst::State::PAUSED)
   end
 end
