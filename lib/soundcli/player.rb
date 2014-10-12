@@ -62,12 +62,12 @@ class Player
     @playbin.play
 
     GLib::Timeout.add(100) do
-      @duration = self.ns_to_str(self.duration)
-      @position = self.ns_to_str(self.position)
+      duration = self.ns_to_str(self.duration)
+      position = self.ns_to_str(self.position)
       timestamp = self.position/1000000
 
       if self.playing?
-        Helpers::say("#{@position}/#{@duration}  \r", :normal)
+        Helpers::say("#{position}/#{duration}  \r", :normal)
         $stdout.flush
       end
 
