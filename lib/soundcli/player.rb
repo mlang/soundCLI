@@ -5,7 +5,7 @@ require "soundcli/helpers"
 class Player
   def initialize
     # create the bin
-    @playbin, error = Gst.parse_launch("playbin")
+    @playbin = Gst.parse_launch("playbin")
     #watch the bus for messages
     @playbin.bus.add_watch do |bus, message|
       handle_bus_message(message)
@@ -102,12 +102,10 @@ class Player
   end
 
   def resume
-    @playbin.set_state(Gst::State::PLAYING)
     @playbin.play
   end
 
   def pause
-    @playbin.set_state(Gst::State::PAUSED)
     @playbin.pause
     Helpers::say("--- PAUSED ---\r", :normal)
   end
